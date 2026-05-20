@@ -34,6 +34,8 @@ import {
 } from "./api"
 
 export function initEnvironmentsSync() {
+  if (import.meta.env.VITE_DISABLE_BACKEND === 'true') return
+
   const currentUser$ = platformAuth.getCurrentUserStream()
 
   environnmentsSyncer.startStoreSync()

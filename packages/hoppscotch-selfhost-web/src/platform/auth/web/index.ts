@@ -248,6 +248,13 @@ export const def: AuthPlatformDef = {
     return null
   },
   async performAuthInit() {
+    if (import.meta.env.VITE_DISABLE_BACKEND === 'true') {
+      currentUser$.next(null)
+      probableUser$.next(null)
+      isGettingInitialUser.value = false
+      return
+    }
+
     const probableUser = JSON.parse(
       (await persistenceService.getLocalConfig("login_state")) ?? "null"
     )

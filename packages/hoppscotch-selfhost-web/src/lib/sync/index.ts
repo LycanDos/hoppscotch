@@ -34,6 +34,7 @@ export const getSyncInitFunction = <T extends DispatchingStore<any, any>>(
 ) => {
   let startSubscriptions: () => () => void | undefined
   let stopSubscriptions: () => void | undefined
+  let pendingStart = false
 
   let oldSyncStatus = shouldSyncValue()
 
@@ -70,13 +71,16 @@ export const getSyncInitFunction = <T extends DispatchingStore<any, any>>(
 
   function setupSubscriptions(func: () => () => void) {
     startSubscriptions = func
+    if (pendingStart) {
+      pendingStart = false
+      startListeningToSubscriptions()
+    }
   }
 
   function startListeningToSubscriptions() {
     if (!startSubscriptions) {
-      console.warn(
-        "We don't have a function to start subscriptions. Please use `setupSubscriptions` to setup the start function."
-      )
+      pendingStart = true
+      return
     }
 
     stopSubscriptions = startSubscriptions?.()
@@ -84,9 +88,7 @@ export const getSyncInitFunction = <T extends DispatchingStore<any, any>>(
 
   function stopListeningToSubscriptions() {
     if (!stopSubscriptions) {
-      console.warn(
-        "We don't have a function to unsubscribe. make sure you return the unsubscribe function when using setupSubscriptions"
-      )
+      return
     }
 
     stopSubscriptions?.()

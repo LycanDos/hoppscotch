@@ -31,6 +31,10 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    cors: true,
+    fs: {
+      strict: false,
+    },
   },
   preview: {
     port: 3000,
@@ -90,6 +94,7 @@ export default defineConfig({
       "@app/api": path.resolve(__dirname, "./src/api"),
       "@app/lib": path.resolve(__dirname, "./src/lib"),
       "@app/kernel": path.resolve(__dirname, "./src/kernel"),
+      "@app/nop-integration": path.resolve(__dirname, "./src/nop-integration"),
 
       // Node.js polyfills
       stream: "stream-browserify",

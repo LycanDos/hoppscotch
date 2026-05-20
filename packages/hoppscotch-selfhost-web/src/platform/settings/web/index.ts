@@ -15,6 +15,8 @@ import {
 import { runDispatchWithOutSyncing } from "@app/lib/sync"
 
 function initSettingsSync() {
+  if (import.meta.env.VITE_DISABLE_BACKEND === 'true') return
+
   const currentUser$ = platformAuth.getCurrentUserStream()
   settingsSyncer.startStoreSync()
   settingsSyncer.setupSubscriptions(setupSubscriptions)

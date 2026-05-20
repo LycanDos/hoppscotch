@@ -38,6 +38,8 @@ import { ReqType, ServiceStatus } from "@app/api/generated/graphql"
 import { ref } from "vue"
 
 function initHistorySync() {
+  if (import.meta.env.VITE_DISABLE_BACKEND === 'true') return
+
   const currentUser$ = platformAuth.getCurrentUserStream()
 
   restHistorySyncer.startStoreSync()

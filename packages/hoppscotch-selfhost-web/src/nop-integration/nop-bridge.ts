@@ -14,10 +14,11 @@
  * }
  */
 
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
+import type { Ref } from 'vue'
 
 // 消息类型定义
-export type MessageType = 'init' | 'getConfig' | 'updateConfig' | 'getCurl' | 'getShareUrl' | 'test'
+export type MessageType = 'init' | 'getConfig' | 'updateConfig' | 'getCurl' | 'getShareUrl' | 'test' | 'close'
 export type MessageId = string
 
 export interface NopMessage<T = any> {
@@ -52,6 +53,11 @@ export interface ApiRequestConfig {
   }
 }
 
+/**
+ * 嵌入模式下是否隐藏顶栏（iframe 中移除浏览器）
+ */
+export const headerHidden: Ref<boolean> = ref(false)
+
 export type HttpMethod =
   | 'GET'
   | 'POST'
@@ -84,6 +90,9 @@ export function initNopBridge() {
 
   console.log('[NOP Bridge] Initializing embedded mode')
 
+  // 嵌入模式下隐藏顶栏
+  headerHidden.value = true
+
   // 监听来自父窗口的消息
   window.addEventListener('message', handleMessage)
 
@@ -94,6 +103,7 @@ export function initNopBridge() {
   registerMessageHandler('getCurl', handleGetCurl)
   registerMessageHandler('getShareUrl', handleGetShareUrl)
   registerMessageHandler('test', handleTest)
+  registerMessageHandler('close', handleClose)
 
   // 通知父窗口已就绪
   sendResponse({ id: 'ready', success: true, data: { status: 'ready' } })
@@ -247,6 +257,22 @@ async function handleTest(payload: any, id: string) {
     },
     body: JSON.stringify({ message: 'Test response' }, null, 2)
   }
+}
+
+/**
+ * 关闭请求配置面板
+ * 父窗口发送 close 消息时，Hoppscotch 将配置发回并清除状态
+ */
+async function handleClose(payload: any, id: string) {
+  console.log('[NOP Bridge] Closing config panel')
+
+  // 将当前配置发回父窗口
+  const config = await handleGetConfig(payload, id)
+
+  // 清除当前配置
+  currentConfig = {}
+
+  return { config, closed: true }
 }
 
 /**

@@ -70,6 +70,8 @@ import { gqlCollectionsSyncer } from "./gqlCollections.sync"
 import { importToPersonalWorkspace } from "./import"
 
 function initCollectionsSync() {
+  if (import.meta.env.VITE_DISABLE_BACKEND === 'true') return
+
   const currentUser$ = platformAuth.getCurrentUserStream()
   collectionsSyncer.startStoreSync()
   collectionsSyncer.setupSubscriptions(setupSubscriptions)

@@ -18,6 +18,9 @@ import { def as desktopCollections } from "@app/platform/collections/desktop"
 import { def as desktopSettings } from "@app/platform/settings/desktop"
 import { def as desktopHistory } from "@app/platform/history/desktop"
 
+// NOP integration
+import { headerHidden } from "@app/nop-integration/nop-bridge"
+
 // Std platform
 import { def as webInstance } from "@app/platform/instance/web"
 import { def as desktopInstance } from "@app/platform/instance/desktop"
@@ -143,6 +146,7 @@ async function initApp() {
       additionalFooterMenuItems: config.menuItems,
       additionalSupportOptionsMenuItems: config.supportItems,
       appHeader: {
+        hidden: headerHidden,
         paddingLeft: headerPaddingLeft,
         paddingTop: headerPaddingTop,
       },

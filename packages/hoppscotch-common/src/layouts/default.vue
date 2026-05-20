@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen w-screen">
     <Splitpanes class="no-splitter" :dbl-click-splitter="false" horizontal>
-      <Pane style="height: auto">
+      <Pane v-if="!platform.ui?.appHeader?.hidden?.value" style="height: auto">
         <AppHeader />
       </Pane>
       <Pane :class="spacerClass" class="flex flex-1 !overflow-hidden md:mb-0">

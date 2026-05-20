@@ -15,6 +15,20 @@
     <script>
       // Shims to make swagger-parser package work
       window.global = window
+
+      // 嵌入模式早期消息缓冲
+      // 在 Vue/SPA 加载前就捕获 postMessage，避免 iframe 时序竞态
+      window.__embedMessageBuffer = window.__embedMessageBuffer || [];
+      window.__embedMessageReady = false;
+      window.addEventListener('message', function __embedBufferHandler(e) {
+        if (window.__embedMessageReady) return;
+        window.__embedMessageBuffer.push(e);
+      });
+      // 自动清理缓冲，防止非嵌入页面泄漏
+      setTimeout(function() {
+        window.__embedMessageReady = true;
+        window.__embedMessageBuffer = [];
+      }, 15000);
     </script>
     <script type="module">
       import { Buffer } from "buffer"

@@ -22,6 +22,12 @@ export type UIPlatformDef = {
     paddingLeft?: Ref<string>
 
     /**
+     * If true, the app header is hidden entirely.
+     * Used by embedded mode (e.g., NOP iframe integration) to remove chrome.
+     */
+    hidden?: Ref<boolean>
+
+    /**
      * A function which is called when the header area of the app receives a click event
      */
     onHeaderAreaClick?: () => void

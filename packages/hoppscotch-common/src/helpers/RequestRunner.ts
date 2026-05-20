@@ -25,7 +25,7 @@ import { Ref } from "vue"
 import { map } from "fp-ts/Either"
 
 import { runPreRequestScript, runTestScript } from "@hoppscotch/js-sandbox/web"
-import { useSetting } from "~/composables/settings"
+import { useSettingStatic } from "~/composables/settings"
 import { getService } from "~/modules/dioc"
 import { stripModulePrefix } from "~/helpers/scripting"
 import { createHoppFetchHook } from "~/helpers/hopp-fetch"
@@ -70,7 +70,7 @@ const currentEnvironmentValueService = getService(CurrentValueService)
 const cookieJarService = getService(CookieJarService)
 const kernelInterceptorService = getService(KernelInterceptorService)
 
-const EXPERIMENTAL_SCRIPTING_SANDBOX = useSetting(
+const [EXPERIMENTAL_SCRIPTING_SANDBOX] = useSettingStatic(
   "EXPERIMENTAL_SCRIPTING_SANDBOX"
 )
 
