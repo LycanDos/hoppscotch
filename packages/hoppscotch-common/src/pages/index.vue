@@ -1,6 +1,7 @@
 <template>
-  <div>
-    <AppPaneLayout layout-id="http">
+  <div class="flex h-full min-h-0 flex-col">
+    <div class="min-h-0 flex-1">
+      <AppPaneLayout layout-id="http">
       <template #primary>
         <HoppSmartWindows
           v-if="currentTabID"
@@ -71,69 +72,74 @@
       <template #sidebar>
         <HttpSidebar />
       </template>
-    </AppPaneLayout>
+      </AppPaneLayout>
+    </div>
     <CollectionsEditRequest
-      v-model="reqName"
-      :request-context="requestToRename"
-      :show="showRenamingReqNameModal"
-      @submit="renameReqName"
-      @hide-modal="showRenamingReqNameModal = false"
-    />
-    <HoppSmartConfirmModal
-      :show="confirmingCloseAllTabs"
-      :confirm="t('modal.close_unsaved_tab')"
-      :title="t('confirm.close_unsaved_tabs', { count: unsavedTabsCount })"
-      @hide-modal="confirmingCloseAllTabs = false"
-      @resolve="onResolveConfirmCloseAllTabs"
-    />
-    <HoppSmartModal
-      v-if="confirmingCloseForTabID !== null"
-      dialog
-      role="dialog"
-      aria-modal="true"
-      :title="t('modal.close_unsaved_tab')"
-      @close="confirmingCloseForTabID = null"
-    >
-      <template #body>
-        <div class="text-center">
-          {{ t("confirm.save_unsaved_tab") }}
-        </div>
-      </template>
-      <template #footer>
-        <span class="flex space-x-2">
-          <HoppButtonPrimary
-            v-focus
-            :label="t?.('action.yes')"
-            outline
-            @click="onResolveConfirmSaveTab"
-          />
-          <HoppButtonSecondary
-            :label="t?.('action.no')"
-            filled
-            outline
-            @click="onCloseConfirmSaveTab"
-          />
-        </span>
-      </template>
-    </HoppSmartModal>
-    <CollectionsSaveRequest
-      v-if="savingRequest"
-      mode="rest"
-      :show="savingRequest"
-      @hide-modal="onSaveModalClose"
-    />
-    <AppContextMenu
-      v-if="contextMenu.show"
-      :show="contextMenu.show"
-      :position="contextMenu.position"
-      :text="contextMenu.text"
-      @hide-modal="contextMenu.show = false"
-    />
+        v-model="reqName"
+        :request-context="requestToRename"
+        :show="showRenamingReqNameModal"
+        @submit="renameReqName"
+        @hide-modal="showRenamingReqNameModal = false"
+      />
+      <HoppSmartConfirmModal
+        :show="confirmingCloseAllTabs"
+        :confirm="t('modal.close_unsaved_tab')"
+        :title="t('confirm.close_unsaved_tabs', { count: unsavedTabsCount })"
+        @hide-modal="confirmingCloseAllTabs = false"
+        @resolve="onResolveConfirmCloseAllTabs"
+      />
+      <HoppSmartModal
+        v-if="confirmingCloseForTabID !== null"
+        dialog
+        role="dialog"
+        aria-modal="true"
+        :title="t('modal.close_unsaved_tab')"
+        @close="confirmingCloseForTabID = null"
+      >
+        <template #body>
+          <div class="text-center">
+            {{ t("confirm.save_unsaved_tab") }}
+          </div>
+        </template>
+        <template #footer>
+          <span class="flex space-x-2">
+            <HoppButtonPrimary
+              v-focus
+              :label="t?.('action.yes')"
+              outline
+              @click="onResolveConfirmSaveTab"
+            />
+            <HoppButtonSecondary
+              :label="t?.('action.no')"
+              filled
+              outline
+              @click="onCloseConfirmSaveTab"
+            />
+          </span>
+        </template>
+      </HoppSmartModal>
+      <CollectionsSaveRequest
+        v-if="savingRequest"
+        mode="rest"
+        :show="savingRequest"
+        @hide-modal="onSaveModalClose"
+      />
+      <AppContextMenu
+        v-if="contextMenu.show"
+        :show="contextMenu.show"
+        :position="contextMenu.position"
+        :text="contextMenu.text"
+        @hide-modal="contextMenu.show = false"
+      />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed } from "vue"
+import {
+  ref,
+  onMounted,
+  computed,
+} from "vue"
 import { generateUniqueRefId, safelyExtractRESTRequest } from "@hoppscotch/data"
 import { translateExtURLParams } from "~/helpers/RESTExtURLParams"
 import { useRoute } from "vue-router"

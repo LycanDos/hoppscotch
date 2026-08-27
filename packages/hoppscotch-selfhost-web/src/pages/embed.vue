@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col h-screen overflow-hidden">
-    <!-- 顶部工具栏（仅在直连嵌入或独立模式时显示） -->
+    <!-- 顶部工具栏（独立打开或完成父窗口握手后显示） -->
     <div
       v-if="showToolbar"
       class="flex items-center gap-2 px-4 py-2 border-b border-divider bg-primary flex-shrink-0"
@@ -9,14 +9,15 @@
         API 请求配置 — Hoppscotch
       </span>
       <button
-        class="px-4 py-1.5 rounded text-sm font-medium text-white border-0 cursor-pointer hover:opacity-90"
-        style="background: #52c41a"
+        type="button"
+        class="embed-action-button embed-action-button--primary"
         @click="saveConfig"
       >
         保存配置
       </button>
       <button
-        class="px-4 py-1.5 rounded text-sm font-medium bg-primaryLight text-secondaryDark border border-divider cursor-pointer hover:opacity-90"
+        type="button"
+        class="embed-action-button embed-action-button--secondary"
         @click="cancelEdit"
       >
         取消
@@ -24,23 +25,21 @@
     </div>
 
     <!-- REST 请求编辑器（复用 Hoppscotch 原生组件） -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <HttpRequest v-model="tab" />
-
-      <AppPaneLayout layout-id="embed-rest" class="flex-1 min-h-0">
+    <div class="flex flex-1 min-h-0 flex-col overflow-hidden">
+      <AppPaneLayout
+        layout-id="embed-rest"
+        class="flex-1 min-h-0"
+        :is-embed="true"
+      >
         <template #primary>
-          <HttpRequestOptions
-            v-model="tab.document.request"
-            v-model:option-tab="tab.document.optionTabPreference!"
-            v-model:inherited-properties="tab.document.inheritedProperties"
-          />
-        </template>
-        <template #secondary>
-          <HttpResponse
-            v-model:document="tab.document"
-            :tab-id="tab.id"
-            :is-embed="true"
-          />
+          <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <HttpRequest v-model="tab" />
+            <HttpRequestOptions
+              v-model="tab.document.request"
+              v-model:option-tab="tab.document.optionTabPreference!"
+              v-model:inherited-properties="tab.document.inheritedProperties"
+            />
+          </div>
         </template>
       </AppPaneLayout>
     </div>
@@ -76,8 +75,8 @@ let parentWindow: Window | null = null
 let parentOrigin = "*"
 let surfaceId = "request"
 let mounted = false
-const isDirectEmbed = ref(false) // 直连嵌入：BPMN 直接加载本页面
-const showToolbar = computed(() => !isEmbedded.value || isDirectEmbed.value)
+const bridgeConnected = ref(false)
+const showToolbar = computed(() => !isEmbedded.value || bridgeConnected.value)
 
 const isEmbedded = computed(() => window.self !== window.top)
 
@@ -192,17 +191,20 @@ function hoppscotchToPlatformConfig(request: any): Record<string, any> {
 
   const ct = request.body?.contentType
   const bodyContent = request.body?.body
-  if (ct && bodyContent !== null && bodyContent !== undefined && bodyContent !== "") {
+  // Body 类型和 Body 内容是两个独立状态。用户刚切换到 JSON/raw 等类型时，
+  // 内容可能仍为空，但类型必须保留，否则父窗口实时同步会把它误归一化为 none。
+  if (ct) {
+    const content = bodyContent ?? ""
     if (ct.includes("json")) {
-      config.body = { type: "json", content: bodyContent }
+      config.body = { type: "json", content }
     } else if (ct.includes("xml")) {
-      config.body = { type: "xml", content: bodyContent }
+      config.body = { type: "xml", content }
     } else if (ct.includes("multipart")) {
-      config.body = { type: "form-data", content: bodyContent }
+      config.body = { type: "form-data", content }
     } else if (ct.includes("text")) {
-      config.body = { type: "raw", content: bodyContent }
+      config.body = { type: "raw", content }
     } else {
-      config.body = { type: "raw", content: bodyContent }
+      config.body = { type: "raw", content }
     }
   } else {
     config.body = { type: "none", content: "" }
@@ -234,12 +236,32 @@ function applyPlatformConfig(platformConfig: Record<string, any>, msgSurfaceId?:
   statusText.value = "Hoppscotch 已同步"
 }
 
+function applyEmbeddedTheme(theme: Record<string, any> | undefined) {
+  if (!theme) return
+
+  const mode = theme.mode === "dark" ? "dark" : "light"
+  document.documentElement.setAttribute("class", mode)
+
+  const rootStyle = document.documentElement.style
+  const cssValues: Record<string, string | undefined> = {
+    "--embed-host-primary": theme.primary,
+    "--embed-host-primary-foreground": theme.primaryForeground,
+    "--embed-host-background": theme.background,
+    "--embed-host-foreground": theme.foreground,
+    "--embed-host-border": theme.border,
+    "--embed-host-muted": theme.muted,
+  }
+  for (const [name, value] of Object.entries(cssValues)) {
+    if (value) rootStyle.setProperty(name, value)
+  }
+}
+
 // ---- postMessage 处理 ----
 
 function postToParent(msg: Record<string, any>) {
   try {
     if (parentWindow) {
-      parentWindow.postMessage(msg, parentOrigin)
+      parentWindow.postMessage(JSON.parse(JSON.stringify(msg)), parentOrigin)
     }
   } catch (e) {
     console.warn("[Embed] postMessage failed:", e)
@@ -265,13 +287,19 @@ function processMessage(
   switch (type) {
     case "init": {
       try {
-        isDirectEmbed.value = true
         const platformConfig = payload.config || JSON.parse(payload.configJson || "{}")
+        applyEmbeddedTheme(payload.theme)
         applyPlatformConfig(platformConfig, payload.surfaceId)
+        bridgeConnected.value = true
         postToParent({ type: "ready" })
       } catch (e: any) {
         postToParent({ type: "error", message: e.message })
       }
+      break
+    }
+
+    case "theme": {
+      applyEmbeddedTheme(data || payload.theme)
       break
     }
 
@@ -357,6 +385,45 @@ onUnmounted(() => {
 meta:
   layout: empty
 </route>
+
+<style scoped>
+.embed-action-button {
+  min-height: 30px;
+  padding: 0.375rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease;
+}
+
+.embed-action-button:focus-visible {
+  outline: 2px solid var(--embed-host-primary, var(--accent-color));
+  outline-offset: 2px;
+}
+
+.embed-action-button:hover {
+  opacity: 0.9;
+}
+
+.embed-action-button--primary {
+  background: var(--embed-host-primary, var(--accent-color));
+  border-color: var(--embed-host-primary, var(--accent-color));
+  color: var(--embed-host-primary-foreground, var(--accent-contrast-color));
+}
+
+.embed-action-button--secondary {
+  background: var(--embed-host-muted, var(--primary-light-color));
+  border-color: var(--embed-host-border, var(--divider-color));
+  color: var(--embed-host-foreground, var(--secondary-dark-color));
+}
+</style>
 
 <style scoped>
 :deep(.splitpanes) {

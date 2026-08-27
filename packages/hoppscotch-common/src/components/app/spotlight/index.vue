@@ -89,7 +89,7 @@
 import { useI18n } from "@composables/i18n"
 import { useService } from "dioc/vue"
 import { isEqual } from "lodash-es"
-import { computed, ref, watch } from "vue"
+import { computed, onBeforeUnmount, ref, watch } from "vue"
 import { platform } from "~/platform"
 import { HoppSpotlightSessionEventData } from "~/platform/analytics"
 import {
@@ -297,6 +297,31 @@ function newUseArrowKeysForNavigation() {
 
   return { selectedEntry }
 }
+
+function handleEscapeKey(event: KeyboardEvent) {
+  if (event.key !== "Escape") return
+
+  event.preventDefault()
+  event.stopPropagation()
+  event.stopImmediatePropagation()
+  closeSpotlightModal()
+}
+
+watch(
+  () => props.show,
+  (show) => {
+    if (show) {
+      document.addEventListener("keydown", handleEscapeKey, true)
+    } else {
+      document.removeEventListener("keydown", handleEscapeKey, true)
+    }
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(() => {
+  document.removeEventListener("keydown", handleEscapeKey, true)
+})
 
 function closeSpotlightModal() {
   const analyticsData: HoppSpotlightSessionEventData = {

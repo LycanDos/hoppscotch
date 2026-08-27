@@ -115,6 +115,18 @@
             @click="invokeAction('modals.support.toggle')"
           />
         </div>
+        <div v-if="nopEmbedConnected" class="flex items-center gap-1">
+          <HoppButtonPrimary
+            label="保存配置"
+            class="h-8"
+            @click="nopEmbedSave?.()"
+          />
+          <HoppButtonSecondary
+            label="取消"
+            class="h-8 rounded"
+            @click="nopEmbedCancel?.()"
+          />
+        </div>
         <div
           class="flex"
           :class="{
@@ -372,6 +384,11 @@ import {
   BannerService,
 } from "~/services/banner.service"
 import { WorkspaceService } from "~/services/workspace.service"
+import {
+  nopEmbedCancel,
+  nopEmbedConnected,
+  nopEmbedSave,
+} from "~/services/nop-embed"
 import IconChevronDown from "~icons/lucide/chevron-down"
 import IconDownload from "~icons/lucide/download"
 import IconLayoutDashboard from "~icons/lucide/layout-dashboard"

@@ -54,7 +54,8 @@ export interface ApiRequestConfig {
 }
 
 /**
- * 嵌入模式下是否隐藏顶栏（iframe 中移除浏览器）
+ * 顶栏由宿主应用统一控制。NOP iframe 仍保留 Hoppscotch 原生顶栏，
+ * 仅通过 common 层的嵌入状态注册“保存配置”和“取消”动作。
  */
 export const headerHidden: Ref<boolean> = ref(false)
 
@@ -89,9 +90,6 @@ export function initNopBridge() {
   }
 
   console.log('[NOP Bridge] Initializing embedded mode')
-
-  // 嵌入模式下隐藏顶栏
-  headerHidden.value = true
 
   // 监听来自父窗口的消息
   window.addEventListener('message', handleMessage)
